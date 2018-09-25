@@ -1,0 +1,10 @@
+<resources>
+    <string name="app_name">ViewStatusManager</string>
+
+    <string name="empty">Empty</string>
+    <string name="empty_sub">No content found</string>
+
+    <string name="error">Error!</string>
+    <string name="error_sub">An unexpected error occurred</string>
+
+</resources>
