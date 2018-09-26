@@ -12,17 +12,20 @@ import android.view.ViewGroup;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import java.util.HashMap;
+import java.util.Map;
+
+@SuppressLint("UseSparseArrays")
 public class StatusManager {
 
     private Context context;
 
-    private View progressView = null;
     private View failedView = null;
     private ViewGroup parent;
+    private Map<Integer, View> idMap = new HashMap<>();
+    private Map<Integer, Integer> indexMap = new HashMap<>();
 
     private String errorTitle = null, errorDescription = null;
-
-    private View.OnClickListener errorClickListener;
 
     private StatusManager(@NonNull View parent) {
         this.context = parent.getContext();
@@ -33,30 +36,31 @@ public class StatusManager {
         return new StatusManager(parent);
     }
 
-    public void setErrorTitle(String errorTitle) {
-        this.errorTitle = errorTitle;
-    }
-
-    public void setErrorDescription(String errorDescription) {
-        this.errorDescription = errorDescription;
-    }
-
-    public void setOnErrorClickListener(View.OnClickListener errorClickListener) {
-        this.errorClickListener = errorClickListener;
-    }
-
     public void setStatus(@IdRes int targetViewId, Status status) {
-        View targetView = parent.findViewById(targetViewId);
-        int index = this.parent.indexOfChild(targetView);
+        this.setStatus(targetViewId, status, null);
+    }
+
+    public void setStatus(@IdRes int targetViewId, Status status, View.OnClickListener onClickListener) {
+
+        if (status == Status.PROGRESS)
+            if (idMap.get(targetViewId) == null) {
+                idMap.put(targetViewId, parent.findViewById(targetViewId));
+                indexMap.put(targetViewId, parent.indexOfChild(parent.findViewById(targetViewId)));
+            }
+
+        View targetView = idMap.get(targetViewId);
+        int index = indexMap.get(targetViewId);
 
         ((Activity) context).runOnUiThread(() -> {
 
-            checkConditions(targetView);
+            checkConditions(targetView, onClickListener);
 
             View toAdd;
             switch (status) {
                 case PROGRESS:
-                    toAdd = progressView;
+                    toAdd = new ProgressBar(context);
+                    toAdd.setPadding(0, getPadding(), 0, getPadding());
+                    toAdd.setLayoutParams(targetView.getLayoutParams());
                     break;
                 case SUCCESS:
                     toAdd = targetView;
@@ -85,20 +89,13 @@ public class StatusManager {
     }
 
     @SuppressLint("InflateParams")
-    private void checkConditions(View targetView) {
+    private void checkConditions(View targetView, View.OnClickListener onClickListener) {
         if (parent == null) throw new NullPointerException("Parent view cannot be null");
         if (targetView == null) throw new NullPointerException("Target view cannot be null");
-        if (progressView == null) {
-            progressView = new ProgressBar(context);
-            progressView.setPadding(0, getPadding(), 0, getPadding());
-        }
-        if (failedView == null)
-            failedView = LayoutInflater.from(context).inflate(R.layout.error_layout, null);
 
-        this.failedView.setOnClickListener(this.errorClickListener);
-
-        this.failedView.setLayoutParams(targetView.getLayoutParams());
-        this.progressView.setLayoutParams(targetView.getLayoutParams());
+        failedView = LayoutInflater.from(context).inflate(R.layout.error_layout, null);
+        failedView.setOnClickListener(onClickListener);
+        failedView.setLayoutParams(targetView.getLayoutParams());
     }
 
     private int getPadding() {
