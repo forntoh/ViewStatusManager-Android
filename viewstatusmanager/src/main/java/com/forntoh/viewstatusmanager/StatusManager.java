@@ -18,32 +18,19 @@ public class StatusManager {
 
     private View progressView = null;
     private View failedView = null;
-    private View targetView = null;
-    private ViewGroup parent = null;
-
-    private int targetViewId, index;
-
-    private ViewGroup.LayoutParams targetViewLayoutParams;
+    private ViewGroup parent;
 
     private String errorTitle = null, errorDescription = null;
 
     private View.OnClickListener errorClickListener;
 
-    private StatusManager(int targetView) {
-        this.targetViewId = targetView;
-    }
-
-    public static StatusManager with(@IdRes int targetView) {
-        return new StatusManager(targetView);
-    }
-
-    public StatusManager from(@NonNull View parent) {
+    private StatusManager(@NonNull View parent) {
         this.context = parent.getContext();
         this.parent = (ViewGroup) parent;
-        this.targetView = parent.findViewById(targetViewId);
-        this.index = this.parent.indexOfChild(targetView);
-        this.targetViewLayoutParams = this.targetView.getLayoutParams();
-        return this;
+    }
+
+    public static StatusManager from(@NonNull View parent) {
+        return new StatusManager(parent);
     }
 
     public void setErrorTitle(String errorTitle) {
@@ -58,9 +45,13 @@ public class StatusManager {
         this.errorClickListener = errorClickListener;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(@IdRes int targetViewId, Status status) {
+        View targetView = parent.findViewById(targetViewId);
+        int index = this.parent.indexOfChild(targetView);
+
         ((Activity) context).runOnUiThread(() -> {
-            checkConditions();
+
+            checkConditions(targetView);
 
             View toAdd;
             switch (status) {
@@ -94,7 +85,7 @@ public class StatusManager {
     }
 
     @SuppressLint("InflateParams")
-    private void checkConditions() {
+    private void checkConditions(View targetView) {
         if (parent == null) throw new NullPointerException("Parent view cannot be null");
         if (targetView == null) throw new NullPointerException("Target view cannot be null");
         if (progressView == null) {
@@ -106,8 +97,8 @@ public class StatusManager {
 
         this.failedView.setOnClickListener(this.errorClickListener);
 
-        this.failedView.setLayoutParams(targetViewLayoutParams);
-        this.progressView.setLayoutParams(targetViewLayoutParams);
+        this.failedView.setLayoutParams(targetView.getLayoutParams());
+        this.progressView.setLayoutParams(targetView.getLayoutParams());
     }
 
     private int getPadding() {

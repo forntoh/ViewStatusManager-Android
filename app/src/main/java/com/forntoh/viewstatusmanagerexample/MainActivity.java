@@ -25,19 +25,19 @@ public class MainActivity extends AppCompatActivity {
         restart.setEnabled(false);
         StatusManager statusManager =
 
-                StatusManager.with(R.id.target).from(findViewById(R.id.parent));
+                StatusManager.from(findViewById(R.id.parent));
 
-        statusManager.setStatus(Status.PROGRESS);
+        statusManager.setStatus(R.id.target, Status.PROGRESS);
 
         new Handler().postDelayed(() -> {
             statusManager.setOnErrorClickListener(v -> {
-                statusManager.setStatus(Status.PROGRESS);
+                statusManager.setStatus(R.id.target, Status.PROGRESS);
                 new Handler().postDelayed(() -> {
                     restart.setEnabled(true);
-                    statusManager.setStatus(Status.SUCCESS);
+                    statusManager.setStatus(R.id.target, Status.SUCCESS);
                 }, 3000);
             });
-            statusManager.setStatus(Status.FAILURE);
+            statusManager.setStatus(R.id.target, Status.FAILURE);
         }, 3000);
     }
 }
