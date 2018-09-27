@@ -5,6 +5,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.IdRes;
 import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -18,18 +19,20 @@ import java.util.Map;
 @SuppressLint("UseSparseArrays")
 public class StatusManager {
 
+    private final boolean isConstraintLayout;
     private Context context;
 
-    private View failedView = null;
+    private View failedView = null, progressView = null;
     private ViewGroup parent;
     private Map<Integer, View> idMap = new HashMap<>();
     private Map<Integer, Integer> indexMap = new HashMap<>();
 
-    private String errorTitle = null, errorDescription = null;
+    private String errorTitle = null, errorDesc = null;
 
     private StatusManager(@NonNull View parent) {
         this.context = parent.getContext();
         this.parent = (ViewGroup) parent;
+        isConstraintLayout = parent instanceof ConstraintLayout;
     }
 
     public static StatusManager from(@NonNull View parent) {
@@ -42,11 +45,10 @@ public class StatusManager {
 
     public void setStatus(@IdRes int targetViewId, Status status, View.OnClickListener onClickListener) {
 
-        if (status == Status.PROGRESS)
-            if (idMap.get(targetViewId) == null) {
-                idMap.put(targetViewId, parent.findViewById(targetViewId));
-                indexMap.put(targetViewId, parent.indexOfChild(parent.findViewById(targetViewId)));
-            }
+        if (status == Status.PROGRESS && idMap.get(targetViewId) == null) {
+            idMap.put(targetViewId, parent.findViewById(targetViewId));
+            indexMap.put(targetViewId, parent.indexOfChild(parent.findViewById(targetViewId)));
+        }
 
         View targetView = idMap.get(targetViewId);
         int index = indexMap.get(targetViewId);
@@ -58,9 +60,7 @@ public class StatusManager {
             View toAdd;
             switch (status) {
                 case PROGRESS:
-                    toAdd = new ProgressBar(context);
-                    toAdd.setPadding(0, getPadding(), 0, getPadding());
-                    toAdd.setLayoutParams(targetView.getLayoutParams());
+                    toAdd = progressView;
                     break;
                 case SUCCESS:
                     toAdd = targetView;
@@ -68,22 +68,50 @@ public class StatusManager {
                 case EMPTY:
                     toAdd = failedView;
                     if (errorTitle == null) errorTitle = context.getString(R.string.empty);
-                    if (errorDescription == null)
-                        errorDescription = context.getString(R.string.empty_sub);
+                    if (errorDesc == null) errorDesc = context.getString(R.string.empty_sub);
                     break;
                 default:
                     toAdd = failedView;
                     if (errorTitle == null) errorTitle = context.getString(R.string.error);
-                    if (errorDescription == null)
-                        errorDescription = context.getString(R.string.error_sub);
+                    if (errorDesc == null) errorDesc = context.getString(R.string.error_sub);
                     break;
             }
 
+            ViewGroup.LayoutParams layoutParams;
+
+            if (isConstraintLayout) {
+                ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) targetView.getLayoutParams();
+                ConstraintLayout.LayoutParams newParams = new ConstraintLayout.LayoutParams(ConstraintLayout.LayoutParams.WRAP_CONTENT, ConstraintLayout.LayoutParams.WRAP_CONTENT);
+
+                toAdd.setLayoutParams(params);
+
+                newParams.topToTop = params.topToTop;
+                newParams.topToBottom = params.topToBottom;
+                newParams.leftToLeft = params.leftToLeft;
+                newParams.leftToRight = params.leftToRight;
+                newParams.bottomToBottom = params.bottomToBottom;
+                newParams.bottomToTop = params.bottomToTop;
+                newParams.rightToRight = params.rightToRight;
+                newParams.rightToLeft = params.rightToLeft;
+
+                newParams.startToStart = params.startToStart;
+                newParams.startToEnd = params.startToEnd;
+                newParams.endToEnd = params.endToEnd;
+                newParams.endToStart = params.endToStart;
+
+                newParams.verticalBias = params.verticalBias;
+                newParams.horizontalBias = params.horizontalBias;
+
+                newParams.setMargins(params.leftMargin, params.topMargin, params.rightMargin, params.bottomMargin);
+
+                layoutParams = newParams;
+            } else layoutParams = targetView.getLayoutParams();
+
             parent.removeViewAt(index);
-            parent.addView(toAdd, index);
+            parent.addView(toAdd, index, layoutParams);
 
             ((TextView) failedView.findViewById(R.id.place_title)).setText(errorTitle);
-            ((TextView) failedView.findViewById(R.id.place_sub)).setText(errorDescription);
+            ((TextView) failedView.findViewById(R.id.place_sub)).setText(errorDesc);
             ((TextView) failedView.findViewById(R.id.place_sub)).append(", Tap here to retry");
         });
     }
@@ -95,7 +123,11 @@ public class StatusManager {
 
         failedView = LayoutInflater.from(context).inflate(R.layout.error_layout, null);
         failedView.setOnClickListener(onClickListener);
-        failedView.setLayoutParams(targetView.getLayoutParams());
+        failedView.setId(targetView.getId());
+
+        progressView = new ProgressBar(context);
+        progressView.setPadding(0, getPadding(), 0, getPadding());
+        progressView.setId(targetView.getId());
     }
 
     private int getPadding() {
