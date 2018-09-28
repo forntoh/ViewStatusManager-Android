@@ -1,10 +1,12 @@
 # ViewStatusManager
 
-![Image](https://img.shields.io/badge/version-0.4.0-blue.svg) ![Image](	https://img.shields.io/github/license/forntoh/ViewStatusManager-Android.svg)  ![Image](https://img.shields.io/badge/build-passing-green.svg)  ![Image](https://img.shields.io/badge/dependencies-up%20to%20date-green.svg) ![Image](https://img.shields.io/twitter/url/https/github.com/forntoh/ViewStatusManager-Android.svg?style=social)
+![](https://img.shields.io/badge/version-0.4.0-blue.svg) ![](https://img.shields.io/github/license/forntoh/ViewStatusManager-Android.svg)  ![](https://img.shields.io/badge/build-passing-green.svg)  ![](https://img.shields.io/badge/dependencies-up%20to%20date-green.svg) ![](https://img.shields.io/twitter/url/https/github.com/forntoh/ViewStatusManager-Android.svg?style=social)
 
 ViewStatus manager is a tool used to ease the process of adding and managing a ProgressView (feedback) when loading information to a view.
 
 Fully supports `ConstraintLayout`
+
+![](demo.gif)
 
 ## Getting Started
 
